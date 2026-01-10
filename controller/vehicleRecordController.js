@@ -1,8 +1,8 @@
 import VehicleRecord from "../model/vehicleRecords.js";
 
 export async function createVehicleRecord(req, res) {
-    try{
-       
+    try {
+
         const vehicleRecord = new VehicleRecord({
             passId: req.body.passId,
             data: req.body.data,
@@ -16,15 +16,15 @@ export async function createVehicleRecord(req, res) {
             outTime: req.body.outTime,
             inTime: req.body.inTime,
             approvalStatus: req.body.approvalStatus
-        }   
+        }
         );
         await vehicleRecord.save();
         res.status(201).json({
             message: "Vehicle record created successfully",
-           
+
         });
     }
-    catch(err){
+    catch (err) {
         console.log(err);
         res.status(500).json({
             message: "Failed to create vehicle record"
@@ -33,17 +33,17 @@ export async function createVehicleRecord(req, res) {
 }
 
 export async function viewAllVehicleRecords(req, res) {
-    try{
-        if(VehicleRecord== null){
+    try {
+        const records = await VehicleRecord.find();
+        if (!records || records.length === 0) {
             res.status(404).json({
-                message:"No vehicle records found"
+                message: "No vehicle records found"
             })
             return
         }
-        const records = await VehicleRecord.find();
         res.status(200).json(records);
     }
-    catch(err){
+    catch (err) {
         console.log(err);
         res.status(500).json({
             message: "Failed to fetch vehicle records"
@@ -52,18 +52,18 @@ export async function viewAllVehicleRecords(req, res) {
 }
 
 export async function viewVehicleRecordById(req, res) {
-    try{
+    try {
         const passId = req.params.passId;
-        const pass = await VehicleRecord.findOne({pass:passId});
-        if(pass == null){
+        const pass = await VehicleRecord.findOne({ passId: passId });
+        if (pass == null) {
             res.status(404).json({
-                message:"No vehicle record found"
+                message: "No vehicle record found"
             })
             return
         }
         res.status(200).json(pass);
     }
-    catch(err){
+    catch (err) {
         console.log(err);
         res.status(500).json({
             message: "Failed to fetch vehicle record"

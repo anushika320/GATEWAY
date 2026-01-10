@@ -91,55 +91,55 @@ export function createUser(req,res){
     )
 }*/
 
-export async function loginUser(req,res){
-    try{
-        const email=req.body.email;
-        const password=req.body.password;
+export async function loginUser(req, res) {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
 
-        User.findOne({email:email}).then((user)=>{
-            if(user==null){
+        User.findOne({ email: email }).then((user) => {
+            if (user == null) {
                 console.log('user not found');
                 res.status(401).json({
-                    message:'User not found'
+                    message: 'User not found'
                 })
 
             }
-            else{
-                const isPasswordCorrect = bcrypt.compareSync(password,user.password);
-                if(isPasswordCorrect){
+            else {
+                const isPasswordCorrect = bcrypt.compareSync(password, user.password);
+                if (isPasswordCorrect) {
                     const token = jwt.sign({
-                        userId:user.userId,
-                        email:user.email,
-                        role:user.role
-                    },"gate-pass-secret-key"
+                        userId: user.userId,
+                        email: user.email,
+                        role: user.role
+                    }, "gate-pass-secret-key"
                     )
                     console.log('Login successful');
                     console.log(token);
-                res.status(200).json({
-                    message:"Login successful",
-                    token:token,
-                    role:user.role
-                })
+                    res.status(200).json({
+                        message: "Login successful",
+                        token: token,
+                        role: user.role
+                    })
                 }
-                else{
+                else {
                     console.log('Password is incorrect');
                     res.status(401).json({
-                        messag:"Password is incorrect"
+                        message: "Password is incorrect"
                     })
                 }
             }
         })
     }
-    catch(err){
+    catch (err) {
         res.status(500).send({
-            message:"Internal Server Error",
-            error:err.message
+            message: "Internal Server Error",
+            error: err.message
         })
     }
-    
+
 }
 
-export function isAdmin(req){
+export function isAdmin(req) {
     if (!req.user) return false;
     return req.user.role === 'admin';
 }

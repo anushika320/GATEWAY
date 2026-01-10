@@ -10,51 +10,7 @@ const port = 5000;
 const app = express();
 app.use(express.json());
 
-app.use((req, res, next) => {
-  const tokenString = req.header("Authorization");
-  if (tokenString != null) {
-    const token = tokenString.replace("Bearer ", "");
-    jwt.verify(token, "gate-pass-secret-key", (err, decodedToken) => {
-      if (decodedToken != null) {
-        req.user = decodedToken;
-        next();
-      } else {
-        res.status(401).json({
-          message: "Unauthorized access",
-        });
-      }
-    });
-  } else {
-    req.user = null; // Add this line to avoid undefined
-    next();
-  }
-});
-/*
-app.use((req,res,next)=>{
-    const tokenString = req.header('Authorization');
-    if(tokenString!= null){
-        const token = tokenString.replace('Bearer ','');
-
-        jwt.verify(token,"gate-pass-secret-key",
-        (err,decodedToken)=>{
-            if(decodedToken!= null){
-                console.log(decodedToken);
-                req.user = decodedToken;    
-                next();
-            }
-            else{
-                console.log("invalid token");
-                res.status(401).json({
-                    message:"Unauthorized access"
-                })
-            }
-    })
-    }
-    
-})
-    */
-
-// ...existing code...
+// JWT Authentication Middleware
 app.use((req, res, next) => {
   const tokenString = req.header("Authorization");
   if (tokenString) {
@@ -80,7 +36,6 @@ app.use((req, res, next) => {
     next();
   }
 });
-// ...existing code...
 
 app.use("/user", UserRoute);
 app.use("/gatepass", gatepassRouter);
