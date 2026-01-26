@@ -1,0 +1,19 @@
+/* Modern global footer */
+
+.app-footer {
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+  border-top: 1px solid rgba(148, 163, 184, 0.5);
+  background: linear-gradient(90deg, #0f172a, #111827);
+}
+
+.app-footer span {
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.app-footer small {
+  color: #9ca3af;
+}
