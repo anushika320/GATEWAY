@@ -1,74 +1,78 @@
 // routes/userRoutes.js
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { createUser, listUsers, deleteUser } = require('../controllers/userController');
 const User = require('../models/User');
+const { authMiddleware, adminOnly, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
-
-// ---------- helper middleware ----------
-
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
-
-  const token = authHeader.split(' ')[1];
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(401).json({ message: 'Invalid token' });
-    req.user = decoded;
-    next();
-  });
-}
-
-function adminOnly(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-  next();
-}
 
 // ---------- PUBLIC AUTH ROUTE ----------
 // POST /api/users/login
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
+  // Validate input
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
+  }
+
+  // Check for env-based super admin
   const envAdmin = {
     username: process.env.ADMIN_USERNAME || 'admin',
     password: process.env.ADMIN_PASSWORD || 'admin123',
     role: 'admin',
   };
 
-  // env admin
+  // Environment admin login (for initial setup)
   if (username === envAdmin.username && password === envAdmin.password) {
     const token = jwt.sign(
       { username: envAdmin.username, role: envAdmin.role },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '8h' }
     );
     return res.json({ success: true, role: envAdmin.role, token });
   }
 
   try {
+    // Find user and include password field for comparison
     const user = await User.findOne({ username }).select('+password');
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Use bcrypt to compare password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
     const token = jwt.sign(
       { id: user._id, username: user.username, role: user.role },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '8h' }
     );
-    res.json({ success: true, role: user.role, token });
+
+    res.json({
+      success: true,
+      role: user.role,
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    });
   } catch (err) {
     console.error('login error', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// ---------- OFFICER DASHBOARD (auth only, not admin) ----------
+// ---------- OFFICER DASHBOARD (auth required) ----------
 // GET /api/users/officer/dashboard
 router.get('/officer/dashboard', authMiddleware, (req, res) => {
   if (req.user.role !== 'officer') {
@@ -78,11 +82,13 @@ router.get('/officer/dashboard', authMiddleware, (req, res) => {
   res.json({
     message: 'Security officer dashboard data',
     user: req.user.username,
+    role: req.user.role,
   });
 });
 
 // ---------- ADMIN-ONLY ROUTES ----------
 
+// Apply auth and admin middleware to all routes below
 router.use(authMiddleware, adminOnly);
 
 // POST   /api/users        → create user (admin or officer)
