@@ -1,4 +1,4 @@
-// routes/gatePassRoute.js
+/// routes/gatePassRoute.js
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const {
@@ -8,12 +8,13 @@ const {
   getByDate,
   listActiveGatePasses,
 } = require('../controllers/gatepassController');
-
+       
 const router = express.Router();
-
+    
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
-function authMiddleware(req, res, next) {
+function authMiddleware(req, res, next)
+{
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });
 
@@ -22,7 +23,9 @@ function authMiddleware(req, res, next) {
     if (err) return res.status(401).json({ message: 'Invalid token' });
     req.user = decoded;
     next();
-  });
+  }
+  )
+  ;
 }
 
 function adminOnly(req, res, next) {
@@ -39,7 +42,7 @@ function officerOnly(req, res, next) {
   next();
 }
 
-// Admin: issue gate pass (period)
+// Admin: issue gate pass (period).
 router.post('/', authMiddleware, adminOnly, createGatePass);
 
 // Admin: check passes by validUntil date
