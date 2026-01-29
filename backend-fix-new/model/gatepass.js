@@ -53,8 +53,10 @@ const gatePassSchema = new mongoose.Schema({
             enum:['pending','approved','rejected'],
             default:'pending'   
         }
-        }]
-})
+      }
+    ]
+  }
+)
 
 const GatePass = mongoose.model('GatePass',gatePassSchema);
 export default GatePass;
